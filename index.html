@@ -1,0 +1,275 @@
+<!doctype html>
+<html>
+    <head>
+        <title>hack</title>
+        <link rel="stylesheet" href="hack.css">
+        <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css">
+        <script defer src="https://pyscript.net/alpha/pyscript.js"></script> 
+        <py-env>
+            - requests
+            - BeautifulSoup4
+        </py-env>
+    </head>
+    <body>
+        <!--NAVBAR-->
+        <div class="navbar">
+            <a href="index.html" class="navbar2 navbar-contents">
+                Investment Risk
+            </a>
+            <a href="about.html" class="navbar3 navbar-contents">
+                About Us
+            </a>        
+        </div>
+
+        <!--INTRO/NAME-->
+        <div class="intro">
+            <div class="intro-title">
+                <div class="intro-title-main">
+                    Investment Risk Calculator
+                </div>
+                <div class="intro-title-sub">
+                    Team ALA
+                </div>
+            </div>
+            <div class="line1">_________________________________________________________________________________________________________________________________________</div>
+            <div class="intro-explanation-flex">
+                <div class="spacer spacer1">
+                    
+                </div>
+                <div class="intro-explanation">
+                    
+                    <div>How it works. This simple design allows the user to easily input their data. So the user inputs the symbol of one of the stocks in their portfolio and the number of shares they have. They keep doing this until they've input all of their stocks.</div>
+
+                </div>
+                <div class="spacer spacer2">
+                </div>
+            </div>
+            <div style="text-align: center">
+                <p><input style="border:1px solid" type="text" id="symbol" name="symbol" value="Enter stock symbol here" onfocus="this.value=''"></p>
+    
+                <p><input style="border:1px solid" type="text" id="number-of-shares" name="number-of-shares" value="Enter # of shares here" onfocus="this.value=''"></p>
+    
+                <p style="text-align: center; padding-bottom: 2px; padding-top: 2px;"><button button style="border:1px solid" id = "show_output" class = "btn btn-primary" type = "submit" pys-onClick="show_output" onclick="saveUserInput()">submit</button></p>
+
+                <p style="text-align: center"><button id = "main" button style="border:1px solid" class = "btn btn-primary" type = "submit" pys-onClick="main" onclick="doTheCalculations()">calculate</button></p>
+
+                <div id="simple text"></div>
+                <div id="simple text2"></div>
+            </div>
+            <py-script>
+                stock_dict = {}
+
+                def show_output(*args, **kwargs):
+                    output = Element("symbol")
+                    output2 = Element("number-of-shares")
+                    writeVal = output.value
+                    writeVal2 = output2.value
+                    stock_dict[writeVal] = writeVal2
+
+                def getData(*args, **kwargs):
+                    return stock_dict
+                
+                def main(*args, **kwargs):
+                    marketHlt = 6.174285
+                    WriteV = Element("show-results")
+                    WriteV.write(marketHlt)
+
+                    import finnhub
+
+                    #We need a dictionary called stock_dict for this to work. ex: 'AAPL' : 5
+
+                    
+                    total_shares = 0
+                    symbol_list = []
+                    total_risk_list = []
+                    current_price_list = []
+                    # Get first value of dictionary
+                    for b in range(len(stock_dict)):
+                        finnhub_client = finnhub.Client(api_key="cfb9ra1r01qqlprliqf0cfb9ra1r01qqlprliqfg")
+                    
+                        symbol = list(stock_dict.items())[b][0]
+                        shares = list(stock_dict.items())[b][1]
+                        
+                        symbol_list += [symbol]
+                    
+                        total_shares += shares
+                    
+                        #company profile
+                    
+                        company_dict = finnhub_client.company_profile2(symbol=symbol)
+                        starting_date = int(company_dict['ipo'][:4])
+                        starting_risk = 0
+
+                        if 1977 > starting_date:
+                            starting_risk = 10
+                        elif 1982 > starting_date:
+                            starting_risk = 9
+                        elif 1987 > starting_date:
+                            starting_risk = 8
+                        elif 1992 > starting_date:
+                            starting_risk = 7
+                        elif 1997 > starting_date:
+                            starting_risk = 6
+                        elif 2002 > starting_date:
+                            starting_risk = 5
+                        elif 2007 > starting_date:
+                            starting_risk = 4
+                        elif 2012 > starting_date:
+                            starting_risk = 3
+                        elif 2017 > starting_date:
+                            starting_risk = 2
+                        elif 2023 >= starting_date:
+                            starting_risk = 1
+                            
+                    
+                    
+                        #Buy hold or sell
+                    
+                        bhs_risk = 0
+                    
+                        strongBuy = 0
+                        buy = 0
+                        hold = 0
+                        sell = 0
+                        strongSell = 0
+                        for i in range(4):
+                            bhs_dict = finnhub_client.recommendation_trends(symbol)[i]
+                            strongBuy += int(bhs_dict['strongBuy'])
+                            buy += int(bhs_dict['buy'])
+                            hold += int(bhs_dict['hold'])
+                            sell += int(bhs_dict['sell'])
+                            strongSell += int(bhs_dict['strongSell'])
+                            
+                        total_analysis = buy + (2 * strongBuy) + hold + sell + (strongSell * 2)
+                            
+                        strongBuy /= 4
+                        buy /= 4
+                        hold /= 4
+                        sell /= 4
+                        strongSell /= 4
+                            
+                        strongBuy *= 2
+                        strongSell *= 2
+                    
+                        buy += strongBuy
+                        sell += strongSell
+                    
+                        total_bhs = buy-sell
+                    
+                        if buy > sell and buy > hold:
+                            bhs_risk = 4
+                        elif sell > buy and sell > hold:
+                            bhs_risk = 6
+                        elif hold > sell and hold > buy:
+                            bhs_risk = 5
+                            
+                        if total_bhs > total_analysis / 2:
+                            bhs_risk -= 4
+                        elif total_bhs > ((total_analysis / 2) - (total_analysis / 8)):
+                            bhs_risk -= 3
+                        elif total_bhs > ((total_analysis / 2) - (total_analysis / 4)):
+                            bhs_risk -= 2
+                        elif total_bhs > ((total_analysis / 2) - (total_analysis / 4) - (total_analysis / 8)):
+                            bhs_risk -= 1
+                        elif total_bhs > -((total_analysis / 2) - (total_analysis / 4) - (total_analysis / 8)):
+                            bhs_risk -= 0
+                        elif total_bhs > -((total_analysis / 2) - (total_analysis / 4)):
+                            bhs_risk += 1
+                        elif total_bhs > -((total_analysis / 2) - (total_analysis / 8)):
+                            bhs_risk += 2
+                        elif total_bhs > -total_analysis / 2:
+                            bhs_risk += 3
+                        else:
+                            bhs_risk += 4
+                            
+                    
+                        #Quartely EPS
+                    
+                        beat_count = 0
+                        lost_count = 0
+                        for i in range(4):
+                            eps_dict = finnhub_client.company_earnings(symbol, limit=5)[i]
+                            actual_price = eps_dict['actual']
+                            estimate_price = eps_dict['estimate']
+                            if float(actual_price) >= float(estimate_price):
+                                beat_count += 1
+                            elif float(estimate_price) > float(actual_price):
+                                lost_count += 1
+                                
+                        eps_risk = 0
+                    
+                        if beat_count == 4:
+                            eps_risk = 1
+                        elif beat_count == 3:
+                            eps_risk = 3
+                        elif beat_count == 2:
+                            eps_risk = 5
+                        elif beat_count == 1:
+                            eps_risk = 7
+                        elif beat_count == 0:
+                            eps_risk = 9
+                    
+                        total_risk = (starting_risk + bhs_risk + eps_risk)/3
+                    
+                    
+                        total_risk_list += [total_risk]
+                    
+                        #Current price
+                    
+                        current_price = finnhub_client.quote(symbol)['c']
+                        
+                        current_price_list += [current_price]
+                        
+                        
+                    risk = 0
+                    each_stock_percentage = []
+                    for b in range(len(total_risk_list)):
+                        shares = list(stock_dict.items())[b][1]
+                        each_stock_percentage += [(shares / total_shares) * 100]
+                        
+                    for b in range(len(total_risk_list)):
+                        risk += total_risk_list[b] + (each_stock_percentage[b] / 100)
+                        
+                    risk /= len(total_risk_list)
+                    risk = (risk-10) * -1
+                    
+                    for i in range(len(total_risk_list)):
+                        total_risk_list[i] = (total_risk_list[i] - 10) * -1
+                    
+                    #Outputs
+                    
+                    #These are in order that the user enters them. Its each stock
+                    #symbol_list
+                    #current_price_list
+                    #total_risk_list    
+                    
+                    
+                    #Total portfolio risk
+                    #risk                   
+
+                    new_risk = (risk * 0.625) + (marketHlt * 0.375)
+
+            </py-script>
+            <script>
+                function compute(){
+                    var dict = getData();
+                    console.log(dict);
+                }
+            </script>
+        </div>
+        <div class="modal-area" id="hidden" style="display:none">
+            <button style="border: 1px solid; color: purple" id="openModal">See results</button>
+        </div>
+        <div id="modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <div>Current market health value: <p id="show-results"></p></div>
+            </div>
+        </div>
+        <div class="line2">_________________________________________________________________________________________________________________________________________</div>
+        <div class="footer">
+
+        </div>
+        <script src="hack.js"></script>
+    </body>
+</html>
